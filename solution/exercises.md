@@ -54,8 +54,8 @@ Chọn một đoạn văn tiếng Việt ~100 từ. So sánh số token theo `co
 
 **Hai con số chênh nhau bao nhiêu phần trăm? Vì sao tiếng Việt thường tốn
 nhiều token hơn tiếng Anh cùng độ dài?**
-> + Test với đoạn văn tiếng Việt 106 từ: đếm qua `tiktoken` (gpt-4o) được 137 tokens, còn ước lượng thô (106 / 0.75) được 141.3 tokens -> hai con số chênh nhau khoảng ~3.1%.
-> + Tiếng Việt tốn nhiều token hơn tiếng Anh cùng nội dung (đoạn trên dịch sang tiếng Anh chỉ tốn 90 tokens) vì các thuật toán tokenization được huấn luyện chủ yếu trên kho ngữ liệu tiếng Anh. Tiếng Việt có hệ thống dấu và từ ghép nên thường bị tách nhỏ thành nhiều sub-words hoặc mã hóa theo từng byte UTF-8 thay vì trọn vẹn cả từ.
+> + Thực nghiệm với đoạn văn tiếng Việt 106 từ: đếm qua `tiktoken` (gpt-4o) được 137 tokens, còn ước lượng thô (106 / 0.75) được 141.3 tokens -> hai con số chênh nhau khoảng ~3.1%.
+> + Tiếng Việt tốn nhiều token hơn tiếng Anh cùng nội dung (đoạn trên dịch sang tiếng Anh chỉ tốn 90 tokens) vì các thuật toán tokenization (như BPE) được huấn luyện chủ yếu trên kho ngữ liệu tiếng Anh. Tiếng Việt có hệ thống dấu thanh và từ ghép nên thường bị tách nhỏ thành nhiều sub-words hoặc mã hóa theo từng byte UTF-8 thay vì trọn vẹn cả từ.
 
 ---
 
@@ -84,13 +84,13 @@ thích 1–2 lựa chọn từ ngữ quan trọng trong prompt (ví dụ: vì sa
 > + System prompt: `"Bạn là trợ giảng AI thân thiện, trả lời ngắn gọn, súc tích bằng tiếng Việt và ưu tiên đưa ra ví dụ code minh họa khi giải thích."`
 > + Lựa chọn từ ngữ quan trọng:
 >   - "Ngắn gọn, súc tích": Giúp tiết kiệm output tokens (giảm chi phí và giảm độ trễ), tránh việc model giải thích lan man những điều không cần thiết.
->   - "Bằng tiếng Việt": Cố định ngôn ngữ phản hồi ngay từ đầu, tránh tình trạng câu hỏi nhiều ngôn ngữ bị model trả lời lệch sang tiếng Anh.
+>   - "Bằng tiếng Việt": Cố định ngôn ngữ phản hồi ngay từ đầu, tránh tình trạng câu hỏi song ngữ bị model trả lời lệch sang tiếng Anh.
 
 ### Câu 4.2 — Hạn chế & cải thiện
 **Trợ lý của bạn hiện có hạn chế lớn nhất là gì (ví dụ: history chỉ 3 lượt,
 không có bộ nhớ dài hạn, không kiểm duyệt nội dung...)? Đề xuất một cải
 thiện cụ thể và mô tả ngắn cách triển khai:**
-> + Hạn chế lớn nhất: Trợ lý chỉ có bộ nhớ ngắn hạn bị cắt cứng ở 3 lượt cuối (6messages), dẫn đến việc mất hoàn toàn ngữ cảnh quan trọng nếu người dùng trò chuyện dài, và không lưu trữ trạng thái người dùng giữa các phiên khác nhau.
+> + Hạn chế lớn nhất: Trợ lý chỉ có bộ nhớ ngắn hạn bị cắt cứng ở 3 lượt cuối (FIFO buffer 6 messages), dẫn đến việc mất hoàn toàn ngữ cảnh quan trọng nếu người dùng trò chuyện dài, và không lưu trữ trạng thái người dùng giữa các phiên khác nhau.
 > + Đề xuất cải thiện: Tích hợp kỹ thuật Tóm tắt lịch sử (Conversation Summary Buffer) hoặc lưu ngữ cảnh vào Vector Database / SQLite. Cụ thể: khi history vượt quá ngưỡng token nhất định, dùng một lượt gọi model nhỏ (như mini/flash) tóm tắt các lượt trao đổi cũ thành một đoạn văn ngắn lưu trong `system/developer message`, vừa giữ được ngữ cảnh lâu dài vừa tối ưu chi phí token đầu vào.
 
 ---
