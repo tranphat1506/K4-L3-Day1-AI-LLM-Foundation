@@ -503,8 +503,12 @@ def batch_compare(prompts: list[str]) -> list[dict]:
         List các dict — mỗi dict là kết quả compare_models kèm thêm
         key "prompt" chứa prompt gốc.
     """
-    # TODO (bonus): lặp qua prompts, gọi compare_models, thêm key "prompt"
-    raise NotImplementedError("Implement batch_compare")
+    results = []
+    for prompt in prompts:
+        res = compare_models(prompt)
+        res["prompt"] = prompt
+        results.append(res)
+    return results
 
 
 def format_comparison_table(results: list[dict]) -> str:
@@ -514,8 +518,29 @@ def format_comparison_table(results: list[dict]) -> str:
     Cột: Prompt | GPT-4o Response | Mini Response | GPT-4o Latency | Mini Latency
     Gợi ý: cắt text dài còn 40 ký tự cho dễ nhìn.
     """
-    # TODO (bonus): dựng chuỗi bảng và trả về
-    raise NotImplementedError("Implement format_comparison_table")
+    def truncate(text: str, length: int = 40) -> str:
+        clean_text = " ".join(text.split())
+        return clean_text[:length - 3] + "..." if len(clean_text) > length else clean_text
+
+    headers = ["Prompt", "GPT-4o Response", "Mini Response", "GPT-4o Latency", "Mini Latency"]
+    col_widths = [40, 40, 40, 15, 15]
+
+    header_row = " | ".join(h.ljust(w) for h, w in zip(headers, col_widths))
+    separator_row = "-+-".join("-" * w for w in col_widths)
+
+    rows = [header_row, separator_row]
+
+    for item in results:
+        prompt_str = truncate(str(item.get("prompt", "")), col_widths[0])
+        gpt4o_res = truncate(str(item.get("gpt4o_response", "")), col_widths[1])
+        mini_res = truncate(str(item.get("mini_response", "")), col_widths[2])
+        gpt4o_lat = f"{item.get('gpt4o_latency', 0.0):.2f}s".ljust(col_widths[3])
+        mini_lat = f"{item.get('mini_latency', 0.0):.2f}s".ljust(col_widths[4])
+
+        row = f"{prompt_str.ljust(col_widths[0])} | {gpt4o_res.ljust(col_widths[1])} | {mini_res.ljust(col_widths[2])} | {gpt4o_lat} | {mini_lat}"
+        rows.append(row)
+
+    return "\n".join(rows)
 
 
 # ---------------------------------------------------------------------------
